@@ -5,6 +5,7 @@ sns.set_theme()
 import numpy as np  
 import seaborn as sns
 
+ 
 
 def minkowski_distance(a, b, p=2):
     """
@@ -18,8 +19,9 @@ def minkowski_distance(a, b, p=2):
     Returns:
         float: Minkowski distance between arrays a and b.
     """
+ 
 
-    # TODO
+    return  np.sum(np.abs(a - b) ** p) ** (1 / p)
 
 
 # k-Nearest Neighbors Model
@@ -51,6 +53,16 @@ class knn:
             p (int, optional): The degree of the Minkowski distance. Defaults to 2.
         """
         # TODO
+        # Validaciones
+        if X_train.shape[0] != y_train.shape[0]:
+            raise ValueError("Length of X_train and y_train must be equal.")
+        if not isinstance(k, int) or k <= 0 or not isinstance(p, int) or p <= 0:
+            raise ValueError("k and p must be positive integers.")
+         
+        self.k = k
+        self.p = p
+        self.x_train = X_train
+        self.y_train = y_train
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -63,7 +75,25 @@ class knn:
             np.ndarray: Predicted class labels.
         """
         # TODO
+        predictions = []
 
+        for x_test in X:
+            #para cada punto de  los datos de test calculamos su distancia minkowski con cada uno de los puntos de de de los datos de entrenamiento 
+            np_array_distancias = self.compute_distances(x_test)
+            
+            #del array distances que acabamos de crear, argosrt devuelve los indices del array ordenado 
+            k_cercanos_distancias = self.get_k_nearest_neighbors(np_array_distancias)
+            
+            #obtener las etiquetas de los k vecinos más cercanos al acceder a los datos de entrenamiento de estos k vecinos
+            k_cercanos_etiquetas = self.y_train[k_cercanos_distancias]
+            
+            #determinamos la clase más común entre los vecinos
+            k_cercanos_etiquetas = np.array([1, 0, 0]) #convertimos lista en array
+            mas_comun = self.most_common_label(k_cercanos_etiquetas)
+            predictions.append(mas_comun)
+
+        return np.array(predictions)
+        
     def predict_proba(self, X):
         """
         Predict the class probabilities for the provided data.
@@ -78,6 +108,25 @@ class knn:
             np.ndarray: Predicted class probabilities.
         """
         # TODO
+        probabilities = []
+
+        for x_test in X:
+            #para cada punto de  los datos de test calculamos su distancia minkowski con cada uno de los puntos de de de los datos de entrenamiento 
+            np_array_distancias = self.compute_distances(x_test)
+            
+            #del array distances que acabamos de crear, argosrt devuelve los indices del array ordenado 
+            k_cercanos_distancias = self.get_k_nearest_neighbors(np_array_distancias)
+            
+            #obtener las etiquetas de los k vecinos más cercanos al acceder a los datos de entrenamiento de estos k vecinos
+            k_cercanos_etiquetas = self.y_train[k_cercanos_distancias]
+            
+            #determinamos la clase más común entre los vecinos
+            k_cercanos_etiquetas = np.array([1, 0, 0]) #convertimos lista en array
+            etiquetas, counts = np.unique(k_cercanos_etiquetas, return_counts=True) #devuelve las etiquetas que hay (en este caso 1 y 0 ) y un recuento de cuantas veces aparecen para los k vecinos
+            prob = counts / self.k
+            probabilities.append(prob)
+            
+        return np.array(probabilities)
 
     def compute_distances(self, point: np.ndarray) -> np.ndarray:
         """Compute distance from a point to every point in the training dataset
@@ -89,6 +138,10 @@ class knn:
             np.ndarray: distance from point to each point in the training dataset.
         """
         # TODO
+
+        distances = np.array([minkowski_distance(point, train_point, self.p) for train_point in self.x_train])
+        return distances
+
 
     def get_k_nearest_neighbors(self, distances: np.ndarray) -> np.ndarray:
         """Get the k nearest neighbors indices given the distances matrix from a point.
@@ -103,6 +156,8 @@ class knn:
             You might want to check the np.argsort function.
         """
         # TODO
+        k_cercanos_distancias = np.argsort(distances)[:self.k]  #slicing para quedarnos solo con los k mas cercanos
+        return k_cercanos_distancias
 
     def most_common_label(self, knn_labels: np.ndarray) -> int:
         """Obtain the most common label from the labels of the k nearest neighbors
@@ -114,6 +169,9 @@ class knn:
             int: most common label
         """
         # TODO
+        etiquetas, counts = np.unique(knn_labels, return_counts=True) #devuelve las etiquetas que hay (en este caso 1 y 0 ) y un recuento de cuantas veces aparecen para los k vecinos
+        mas_comun = etiquetas[np.argmax(counts)] 
+        return mas_comun
 
     def __str__(self):
         """
@@ -217,23 +275,26 @@ def evaluate_classification_metrics(y_true, y_pred, positive_label):
     y_true_mapped = np.array([1 if label == positive_label else 0 for label in y_true])
     y_pred_mapped = np.array([1 if label == positive_label else 0 for label in y_pred])
 
-    # Confusion Matrix
-    # TODO
+    # Confusion Matrix components
+    tp = np.sum((y_true_mapped == 1) & (y_pred_mapped == 1))
+    fp = np.sum((y_true_mapped == 0) & (y_pred_mapped == 1))
+    fn = np.sum((y_true_mapped == 1) & (y_pred_mapped == 0))
+    tn = np.sum((y_true_mapped == 0) & (y_pred_mapped == 0))
 
-    # Accuracy
-    # TODO
+    #formula de Accuracy
+    accuracy = (tp + tn) / (tp + tn + fp + fn)
 
-    # Precision
-    # TODO
+    #formula de Precision
+    precision = tp / (tp + fp) if tp + fp != 0 else 0
 
-    # Recall (Sensitivity)
-    # TODO
+    #fromula de Recall (Sensitivity)
+    recall = tp / (tp + fn) if tp + fn != 0 else 0
 
-    # Specificity
-    # TODO
+    #formula de Specificity
+    specificity = tn / (tn + fp) if tn + fp != 0 else 0
 
-    # F1 Score
-    # TODO
+    #fromula de F1 Score
+    f1 = 2 * (precision * recall) / (precision + recall) if precision + recall != 0 else 0
 
     return {
         "Confusion Matrix": [tn, fp, fn, tp],
@@ -243,7 +304,7 @@ def evaluate_classification_metrics(y_true, y_pred, positive_label):
         "Specificity": specificity,
         "F1 Score": f1,
     }
-
+    
 
 
 def plot_calibration_curve(y_true, y_probs, positive_label, n_bins=10):
@@ -270,6 +331,22 @@ def plot_calibration_curve(y_true, y_probs, positive_label, n_bins=10):
 
     """
     # TODO
+    # Step 1: Bin the predicted probabilities
+    bins = np.linspace(0, 1, n_bins + 1)  # Create bins from 0 to 1, n_bins edges
+    bin_centers = (bins[:-1] + bins[1:]) / 2  # Calculate bin centers
+
+    # Step 2: Calculate true proportions for each bin
+    true_proportions = []
+    for i in range(n_bins):
+        # Get the samples whose predicted probability is within the current bin
+        bin_mask = (y_probs >= bins[i]) & (y_probs < bins[i + 1])
+        
+        # Calculate the proportion of positives in this bin
+        true_positive_count = np.sum(y_true[bin_mask] == positive_label)
+        total_in_bin = np.sum(bin_mask)
+        true_proportion = true_positive_count / total_in_bin if total_in_bin > 0 else 0
+        true_proportions.append(true_proportion)
+
     return {"bin_centers": bin_centers, "true_proportions": true_proportions}
 
 
@@ -300,6 +377,8 @@ def plot_probability_histograms(y_true, y_probs, positive_label, n_bins=10):
 
     """
     # TODO
+    # Map the true labels to binary labels (1 for positive, 0 for negative)
+    y_true_mapped = np.array([1 if label == positive_label else 0 for label in y_true])
 
     return {
         "array_passed_to_histogram_of_positive_class": y_probs[y_true_mapped == 1],
@@ -330,4 +409,30 @@ def plot_roc_curve(y_true, y_probs, positive_label):
 
     """
     # TODO
+       # Map the true labels to binary labels (1 for positive, 0 for negative)
+    y_true_mapped = np.array([1 if label == positive_label else 0 for label in y_true])
+
+    # Create an array of thresholds from 0 to 1 (inclusive) with step size 0.1
+    thresholds = np.linspace(0, 1, 11)
+
+    # Initialize empty lists to store FPR and TPR values
+    fpr = []
+    tpr = []
+
+    # Calculate TPR and FPR for each threshold
+    for thresh in thresholds:
+        y_pred = (y_probs >= thresh).astype(int)  # Convert probabilities to 0 or 1 based on threshold
+        
+        tp = np.sum((y_true_mapped == 1) & (y_pred == 1))
+        fp = np.sum((y_true_mapped == 0) & (y_pred == 1))
+        fn = np.sum((y_true_mapped == 1) & (y_pred == 0))
+        tn = np.sum((y_true_mapped == 0) & (y_pred == 0))
+
+        # Calculate TPR and FPR
+        tpr_value = tp / (tp + fn) if tp + fn != 0 else 0
+        fpr_value = fp / (fp + tn) if fp + tn != 0 else 0
+
+        tpr.append(tpr_value)
+        fpr.append(fpr_value)
+
     return {"fpr": np.array(fpr), "tpr": np.array(tpr)}
