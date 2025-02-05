@@ -331,19 +331,20 @@ def plot_calibration_curve(y_true, y_probs, positive_label, n_bins=10):
 
     """
     # TODO
-    # Step 1: Bin the predicted probabilities
-    bins = np.linspace(0, 1, n_bins + 1)  # Create bins from 0 to 1, n_bins edges
-    bin_centers = (bins[:-1] + bins[1:]) / 2  # Calculate bin centers
+    #Bin de las probabilidades predichas
+    bins = np.linspace(0, 1, n_bins + 1)  #creamos n_bins + 1 límites para las probabilidades (divide el rango de 0 a 1 en intervalos iguales.)
+    bin_centers = (bins[:-1] + bins[1:]) / 2  #calculamos los centros de los bins
 
-    # Step 2: Calculate true proportions for each bin
+    #proporciones verdaderas para cada bin:
     true_proportions = []
     for i in range(n_bins):
-        # Get the samples whose predicted probability is within the current bin
+        #seleccionamos las muestras cuyo valor de probabilidad se encuentra dentro del rango del bin actual
         bin_mask = (y_probs >= bins[i]) & (y_probs < bins[i + 1])
         
-        # Calculate the proportion of positives in this bin
+        #calculamos la proporción de resultados positivos dentro de ese bin
         true_positive_count = np.sum(y_true[bin_mask] == positive_label)
         total_in_bin = np.sum(bin_mask)
+        #calculamos la proporción de verdaderos positivos dentro del bin
         true_proportion = true_positive_count / total_in_bin if total_in_bin > 0 else 0
         true_proportions.append(true_proportion)
 
@@ -377,7 +378,7 @@ def plot_probability_histograms(y_true, y_probs, positive_label, n_bins=10):
 
     """
     # TODO
-    # Map the true labels to binary labels (1 for positive, 0 for negative)
+    #mapeamos las etiquetas verdaderas a formato binario:
     y_true_mapped = np.array([1 if label == positive_label else 0 for label in y_true])
 
     return {
@@ -409,17 +410,17 @@ def plot_roc_curve(y_true, y_probs, positive_label):
 
     """
     # TODO
-       # Map the true labels to binary labels (1 for positive, 0 for negative)
+    #Mapeamos las etiquetas verdaderas a etiquetas binarias ,1 para positiva, 0 para negativa
     y_true_mapped = np.array([1 if label == positive_label else 0 for label in y_true])
 
-    # Create an array of thresholds from 0 to 1 (inclusive) with step size 0.1
+    #Creamos un array de umbrales desde 0 hasta 1 con un paso de 0.1
     thresholds = np.linspace(0, 1, 11)
 
-    # Initialize empty lists to store FPR and TPR values
+    #inicializamos listas vacías para almacenar FPR y TPR
     fpr = []
     tpr = []
 
-    # Calculate TPR and FPR for each threshold
+    #calculamos TPR y FPR para cada umbral
     for thresh in thresholds:
         y_pred = (y_probs >= thresh).astype(int)  # Convert probabilities to 0 or 1 based on threshold
         
@@ -428,7 +429,6 @@ def plot_roc_curve(y_true, y_probs, positive_label):
         fn = np.sum((y_true_mapped == 1) & (y_pred == 0))
         tn = np.sum((y_true_mapped == 0) & (y_pred == 0))
 
-        # Calculate TPR and FPR
         tpr_value = tp / (tp + fn) if tp + fn != 0 else 0
         fpr_value = fp / (fp + tn) if fp + tn != 0 else 0
 
