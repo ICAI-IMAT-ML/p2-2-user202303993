@@ -422,7 +422,7 @@ def plot_roc_curve(y_true, y_probs, positive_label):
 
     #calculamos TPR y FPR para cada umbral
     for thresh in thresholds:
-        y_pred = (y_probs >= thresh).astype(int)  # Convert probabilities to 0 or 1 based on threshold
+        y_pred = (y_probs >= thresh).astype(int)  
         
         tp = np.sum((y_true_mapped == 1) & (y_pred == 1))
         fp = np.sum((y_true_mapped == 0) & (y_pred == 1))
